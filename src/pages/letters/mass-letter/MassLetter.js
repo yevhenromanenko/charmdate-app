@@ -38,9 +38,8 @@ const MassLetter = ({ladyId, banUsers, setBanUsers}) => {
     useEffect(() => {
         if (!renderedOnce && menForMassLetter && banUsers) {
             const idsAsObjects = menForMassLetter.map((item) => item.manId);
-            const bannedUserIds = banUsers.map((bannedUser) => bannedUser.id.trim());
+            const bannedUserIds = banUsers.map((bannedUser) => bannedUser.id);
             const filteredUsers = idsAsObjects.filter((user) => !bannedUserIds.includes(user));
-
             setMenForMassLetter(filteredUsers);
             setRenderedOnce(true); // Помечаем, что отрисовка уже выполнена
         }

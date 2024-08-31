@@ -22,6 +22,7 @@ const LoginPassToLocalStorage = async (ladyId) => {
 
             const html = response.data;
 
+            // const regex = /<td>(1) Lady account login password: <font color='#0000FF'>(.*?)<\/font><\/td>/;
             const regex = /<td>\(1\) Lady account login password: <font color='#0000FF'>(.*?)<\/font><\/td>/;
 
             const match = html.match(regex);

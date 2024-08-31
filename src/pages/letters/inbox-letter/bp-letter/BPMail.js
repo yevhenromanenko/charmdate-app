@@ -27,11 +27,9 @@ async function BPMail(url, ladyId) {
         rows.each((index, row) => {
             const $row = $(row);
             const date = $row.find('td[class="emf"][title]').text().trim();
-
             const manIdName = $row.find('td[class="emf"] a').eq(0).text().trim().split(' ')[0].split('--')[0];
-            const womanIdName = $row.find('td[class="emf"] a').eq(0).text().trim().split('--')[1]
-                // .split(' ')[0]
-                // .split('--')[1]
+            const womanIdName = $row.find('td[class="emf"] a').eq(0).text().trim().split(' ')[0].split('--')[1]
+
             const manId = manIdName.split('\u00A0')[1].trim();
             const manName = manIdName.split('\u00A0')[0].trim();
 
@@ -39,6 +37,7 @@ async function BPMail(url, ladyId) {
             const ladyName = womanIdName.split('\u00A0')[0].trim();
 
             const responseId = $row.find('input[name="emf_msg_id[]"]').attr('value');
+
 
             if (womanId === ladyId) {
                 objBP.push({date, manId, manName, womanId, ladyName, responseId});

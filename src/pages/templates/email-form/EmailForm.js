@@ -2,10 +2,6 @@ import HandleTagButtonClick from "../handle-tag-button-click/HandleTagButtonClic
 import '../Templates.scss'
 import React, {useRef, useState} from "react";
 import GetPhotos from "../../letters/get-photos/GetPhotos";
-import getLetterFromServer from "../../letters/letter-on-server/getLetterFromServer";
-import saveLetterToServer from "../../letters/letter-on-server/saveLetterToServer";
-import {showSuccessNotification} from "../../letters/letter-on-server/showSuccessNotification";
-import {showValidationError} from "../../letters/letter-on-server/showValidationError";
 
 const EmailForm = ({setLetter, letter, ladyId, firstLetterContent, firstLetter, setFirstLetterContent, setSelectedMail, setSelectedPrivate, setSelectedVideo, setSelectedGift, selectedMail, selectedPrivate, selectedVideo, selectedGift}) => {
 
@@ -34,7 +30,7 @@ const EmailForm = ({setLetter, letter, ladyId, firstLetterContent, firstLetter, 
 
         try {
 
-            if (firstLetter === 'first-letter' || firstLetter === 'bp-letter' || firstLetter === 'onlinePersonal-letter') {
+            if (firstLetter === 'first-letter' || firstLetter === 'bp-letter') {
                 const mailPhoto = selectedMail ? selectedMail.name : ''
                 const privatePhotoOne = selectedPrivate && selectedPrivate[0] ? selectedPrivate[0] : '';
                 const privatePhotoTwo = selectedPrivate && selectedPrivate[1] ? selectedPrivate[1] : '';
@@ -54,8 +50,7 @@ const EmailForm = ({setLetter, letter, ladyId, firstLetterContent, firstLetter, 
                 };
 
                 // Получить предыдущий объект письма из локального хранилища, если он существует
-                const previousLetterContent = await getLetterFromServer(firstLetter, ladyId) || [];
-                // const previousLetterContent = JSON.parse(localStorage.getItem(`${firstLetter}-${ladyId}`)) || [];
+                const previousLetterContent = JSON.parse(localStorage.getItem(`${firstLetter}-${ladyId}`)) || [];
 
                 if (previousLetterContent.length > 0) {
                     if (previousLetterContent[0].mailPhoto && firstLetterObject.mailPhoto === undefined) {
@@ -80,10 +75,10 @@ const EmailForm = ({setLetter, letter, ladyId, firstLetterContent, firstLetter, 
 
                 const updatedEmails = previousLetterContent.filter(email => email.ladyId !== firstLetterObject.ladyId);
                 updatedEmails.push(firstLetterObject);
-
-                await saveLetterToServer(firstLetter, ladyId, updatedEmails)
-
-                // localStorage.setItem(`${firstLetter}-${ladyId}`, JSON.stringify(updatedEmails));
+                // const updatedEmails = firstLetterContent.filter(email => email.ladyId !== firstLetterObject.ladyId);
+                // updatedEmails.push(firstLetterObject);
+                // Сохранение обьекта письма в локал сторедж
+                localStorage.setItem(`${firstLetter}-${ladyId}`, JSON.stringify(updatedEmails));
 
                 setFirstLetterContent(updatedEmails);
                 setLetter(letter);
@@ -101,9 +96,7 @@ const EmailForm = ({setLetter, letter, ladyId, firstLetterContent, firstLetter, 
                 const updatedEmails = firstLetterContent.filter(email => email.ladyId !== videoObject.ladyId);
                 updatedEmails.push(videoObject);
                 // Сохранение обьекта письма в локал сторедж
-                await saveLetterToServer(firstLetter, ladyId, updatedEmails)
-
-                // localStorage.setItem(`${firstLetter}-${ladyId}`, JSON.stringify(updatedEmails));
+                localStorage.setItem(`${firstLetter}-${ladyId}`, JSON.stringify(updatedEmails));
 
                 setFirstLetterContent(updatedEmails);
                 setLetter(letter);
@@ -119,17 +112,13 @@ const EmailForm = ({setLetter, letter, ladyId, firstLetterContent, firstLetter, 
                 const updatedEmails = firstLetterContent.filter(email => email.ladyId !== sayHiObject.ladyId);
                 updatedEmails.push(sayHiObject);
                 // Сохранение обьекта письма в локал сторедж
-                await saveLetterToServer(firstLetter, ladyId, updatedEmails)
-
-                // localStorage.setItem(`${firstLetter}-${ladyId}`, JSON.stringify(updatedEmails));
+                localStorage.setItem(`${firstLetter}-${ladyId}`, JSON.stringify(updatedEmails));
                 setFirstLetterContent(updatedEmails);
                 setLetter(letter);
             }
 
-            showSuccessNotification('Лист було збережено!');
-            // alert('Лист було збережено');
+            alert('Лист було збережено');
         } catch (err) {
-            showValidationError('Виникла помилка при збереженні листа!');
             console.error(err);
         }
     };

@@ -5,16 +5,11 @@ import {BeatLoader} from "react-spinners";
 import {override} from "../../../functions/override-css/OverRideCss";
 import StartSendAdmire from "./send-admire/StartSendAdmire";
 import GetAdmireManIds from "./get-admire-man-ids/GetAdmireManIds";
+import GetLoginData from "../../../functions/get-login-data/GetLoginData";
 import StopSendAdmire from "./send-admire/StopSendAdmire";
 import UseLocalStorage from "../use-local-storage/UseLocalStorage";
-import VipUserForm from "../../Admire-mail-page/VipUserForm";
-import Checkbox from "../../../functions/checkbox/Checkbox";
 
-const RenderAdmireMail = ({admire, setAdmire, ladyId}) => {
-
-    const textAllUsers = `Зробити розсилку по всім користувачам`
-    const textVipUsers = `Зробити розсилку по VIP користувачам`
-    const [vipUsers, setVipUsers] = useState([]);
+const RenderAdmireMail = ({admire, setAdmire, loginData}) => {
 
     const [show, setShow] = useState(false);
     const [isSendingAdmire, setIsSendingAdmire] = useState(false);
@@ -24,17 +19,9 @@ const RenderAdmireMail = ({admire, setAdmire, ladyId}) => {
     const [errAdmire, setErrAdmire] = useState(0)
     const [selectedAdmire, setSelectedAdmire] = useState([]); // State to track selected admire items
     const [admireManIds, setAdmireManIds] = useState([]);
-    const [lastSavedDate, setLastSavedDate] = UseLocalStorage("lastSavedDateAdmire", new Date().toISOString().slice(0, 10));
+    const [lastSavedDate, setLastSavedDate] = UseLocalStorage("lastSavedDate", new Date().toISOString().slice(0, 10));
+    const [ladyId, setLadyId] = useState('');
 
-    const [checkAllUsers, setCheckAllUsers] = useState(false); // State для галочки
-    const [checkVipUsers, setCheckVipUsers] = useState(false); // State для галочки
-
-    const onAllUsersChange = (e) => {
-        setCheckAllUsers(e.target.checked);
-    }
-    const onVipUsersChange = (e) => {
-        setCheckVipUsers(e.target.checked);
-    }
 
     useEffect(() => {
         const savedSelectedAdmire = localStorage.getItem("selectedAdmire");
@@ -47,58 +34,27 @@ const RenderAdmireMail = ({admire, setAdmire, ladyId}) => {
         localStorage.setItem("selectedAdmire", JSON.stringify(selectedAdmire));
     }, [selectedAdmire]);
 
-
     useEffect(() => {
         async function fetchDataAsync() {
             try {
-                let parsedSavedData;
-                const currentDate = new Date().toISOString().slice(0, 10);
-                const savedData = localStorage.getItem(`admireManIdsData-${ladyId}`);
-                const formattedLastSavedDate = lastSavedDate.slice(0, 10);
 
-                if (savedData) {
-                    parsedSavedData = JSON.parse(savedData);
-                }
+                const loginData = await GetLoginData();
+                setLadyId(loginData.loginUserId)
+                const generator = GetAdmireManIds(loginData);
 
-                const storedVipUsers = localStorage.getItem(`userVipIds-${ladyId}`);
-
-                if (storedVipUsers) {
-                    const parsedStoredVipUsers = JSON.parse(storedVipUsers);
-                    setVipUsers(parsedStoredVipUsers);
-                }
-
-                if (parsedSavedData && formattedLastSavedDate === currentDate && parsedSavedData.length > 2000) {
-                    // Use data from localStorage
-                    setAdmireManIds(parsedSavedData);
-                } else {
-                    // Fetch data and update localStorage
-                    const generator = GetAdmireManIds(ladyId);
-
-                    let result;
-                    for await (const data of generator) {
-                        result = data;
-                        setAdmireManIds(prevIds => [...prevIds, ...result]);
-                    }
-
-                    // Save data to localStorage
-                    setLastSavedDate(currentDate);
+                let result;
+                for await (const data of generator) {
+                    result = data;
+                    setAdmireManIds(prevIds => [...prevIds, ...result]); // Добавление новых данных к предыдущим
                 }
             } catch (error) {
+                // Обработка ошибки
                 console.error(error);
             }
         }
-
         fetchDataAsync();
-    }, [lastSavedDate]);
 
-
-    useEffect(() => {
-        const addInLocalStorage = () => {
-            localStorage.setItem(`admireManIdsData-${ladyId}`, JSON.stringify([...admireManIds]));
-        }
-        addInLocalStorage();
-    }, [admireManIds]);
-
+    }, []);
 
     const handleClick = () => {
         setShow(!show);
@@ -112,7 +68,7 @@ const RenderAdmireMail = ({admire, setAdmire, ladyId}) => {
 
     const startSendingAdmire = async () => {
         if (admireManIds.length > 150 && ladyId.length > 0) {
-            StartSendAdmire(selectedAdmire, setIsSendingAdmire, setSendingIntervalAdmire, admireManIds, setErrAdmire, setCountAdmire, lastSavedDate, setLastSavedDate, ladyId, checkAllUsers, checkVipUsers, vipUsers);
+            StartSendAdmire(selectedAdmire, setIsSendingAdmire, setSendingIntervalAdmire, admireManIds, setErrAdmire, setCountAdmire, lastSavedDate, setLastSavedDate, ladyId, sendingIntervalAdmire, isSendingAdmire);
         } else {
             alert('Зачекайте 10 сек, завантажую користувачів...')
         }
@@ -123,46 +79,14 @@ const RenderAdmireMail = ({admire, setAdmire, ladyId}) => {
     };
 
     const addAdmireMail = () => {
-        const url = `https://www.charmdate.com/clagt/admire/template/add2.php?womanid=${ladyId}`;
+        const url = `https://www.charmdate.com/clagt/admire/template/add2.php?womanid=${loginData.loginUserId}`;
         window.open(url, '_blank');
     };
 
     if (admire.length > 0) {
         return (
             <>
-                <div style={{height: '200px'}} className={"add-admire-container"}>
-
-                    <div className={'left-part'}>
-                            <p className={"info-about"}>Готові до розсилки: {selectedAdmire.length}/{admire.length}, знайдено чоловіків: {admireManIds.length}</p>
-                            <span className={"info-about"}>Надіслано: {countAdmire}/50, помилки: {errAdmire}</span>
-                            <br/>
-                            <Checkbox
-                                checkCamshareInvite={checkAllUsers}
-                                onCamshareInviteChange={onAllUsersChange}
-                                text={textAllUsers}
-
-                            />
-                            <br/>
-                            <Checkbox
-                                checkCamshareInvite={checkVipUsers}
-                                onCamshareInviteChange={onVipUsersChange}
-                                text={textVipUsers}
-                            />
-                    </div>
-
-                    <div style={{padding: '3px'}} className={'right-part'}>
-                        <p style={{marginLeft: '10px'}} className={"info-about"}>Рекомендації щодо розсилки:</p>
-                        <ul>
-                            <li className={"info-rec"}>не розсилайте у день менше 50 Admire Mail, зараз надіслано: {countAdmire}</li>
-                            <li className={"info-rec"}>якщо у вас VIP чоловіків менше 50, тоді продовжіть розсилку по всім чоловікам, зараз VIP чоловіків: {vipUsers.length}</li>
-                            <li className={"info-rec"}>додавайте нові Admire Mail на свята та розсилайте їх, АЛЕ не розсилайте після свят ці Admire Mail</li>
-                            <li className={"info-rec"}>кожен Admire Mail має бути не менше 120 та не більше 150 символів, та мати 3 найкращі фото</li>
-                            <li className={"info-rec"}>ви маєте тільку одну можливість на місяць надіслати Admire Mail чоловіку, тому Admire Mail має бути ідеальним</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div className={"add-admire-container"}>
+                <div className="add-admire-container">
                     <button className={'show-hide-button'} onClick={handleClick}>
                         {show ? 'Admire Mail ⬆' : 'Admire Mail ⬇'}
                     </button>
@@ -174,12 +98,9 @@ const RenderAdmireMail = ({admire, setAdmire, ladyId}) => {
                     ) : (
                         <button className={'letter-button-letter'} onClick={startSendingAdmire}>Почати розсилку</button>
                     )}
+                    <p className={"info-about"}>Готові до розсилки: {admire.length}, знайдено чоловіків: {admireManIds.length}</p>
+                    <span className={"info-about"}>Надіслано: {countAdmire}/50, помилки: {errAdmire}</span>
 
-                    <VipUserForm
-                        vipUsers={vipUsers}
-                        setVipUsers={setVipUsers}
-                        ladyId={ladyId}
-                    />
 
                     {show && (
                         <div style={{borderTop: '1px solid #ddd'}}>
@@ -208,7 +129,6 @@ const RenderAdmireMail = ({admire, setAdmire, ladyId}) => {
                         </div>
                     )}
                 </div>
-
             </>
         )
     } else {

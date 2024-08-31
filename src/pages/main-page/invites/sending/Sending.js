@@ -8,7 +8,7 @@ import SendInviteToUser from "../send-invite-to-user/SendInviteToUser";
 import ConnectWebSocket from "../../connect-web-socket/ConnectWebSocket";
 import delay from "../../../../functions/delay/delay";
 
-const Sending = async (socket, startChat, setIsSending, setIsConnectSocket, setErrorMessage, myListArrayRef, personalListArrayRef, invitesPersonal, banUsers, setErr, checkCamshareInvite, invites, invitesCamshare, reqTicket, reqCounter, setLog, whoViewProfile, whoGetAnswer, loginData, setMyListArray, setPersonalListArray, setChat, setMessage, setStartChat, log, setReconnect, sendInviteRef, setSendInvite, setCountInvite, hasSentCmd98, setHasSentCmd98, hasSentCmd98Ref, markGetAnswer, whoGetSecondAnswer, spamUserIdsRef) => {
+const Sending = async (socket, startChat, setIsSending, setIsConnectSocket, setErrorMessage, myListArrayRef, personalListArrayRef, invitesPersonal, banUsers, setErr, checkCamshareInvite, invites, invitesCamshare, reqTicket, reqCounter, setLog, whoViewProfile, whoGetAnswer, loginData, setMyListArray, setPersonalListArray, setChat, setMessage, setStartChat, log, setReconnect, sendInviteRef, setSendInvite, setCountInvite, hasSentCmd98, setHasSentCmd98, hasSentCmd98Ref) => {
 
         if (startChat) {
             socket.current.close();
@@ -21,47 +21,22 @@ const Sending = async (socket, startChat, setIsSending, setIsConnectSocket, setE
 
         let userExists = false;
         let replaceEmailContent;
-        let myUserOnline;
-        let randomInvite;
-        let randomUser;
-        let spamUserIdsArray;
         const myListArray = myListArrayRef.current; // Получаем актуальное значение myListArray из useRef
-        const personalListArray = personalListArrayRef.current;
-
-        if (spamUserIdsRef) {
-            spamUserIdsArray = spamUserIdsRef.current;
-        }
+        const personalListArray = personalListArrayRef.current
 
         const userToSend = myListArray[Math.floor(Math.random() * myListArray.length)];
 
-        if (spamUserIdsArray && spamUserIdsArray.length > 0) {
-            myUserOnline = spamUserIdsArray[Math.floor(Math.random() * spamUserIdsArray.length)];
-        } else {
-            myUserOnline = myListArray[Math.floor(Math.random() * myListArray.length)];
-        }
-
+        let randomInvite;
         const randomPersonalInvite = invitesPersonal[Math.floor(Math.random() * invitesPersonal.length)];
 
         const userBan = banUsers.some((user) => user.id === userToSend);
-        const personalUserBan = banUsers.some((user) => user.id === myUserOnline);
-        if (userBan || personalUserBan) {
+        if (userBan) {
             setErr(err => err + 1)
             console.log('Спроба відправки користувачу, який у бан листі! Не відправлено!')
             return null;
         }
 
-        if (reqTicket % 10 === 0) {
-            randomUser = await GetUserInfo(myUserOnline)
-        } else {
-            randomUser = await GetUserInfo(userToSend)
-        }
-
-        const banUser = banUsers.some((user) => user.id === randomUser.id);
-        if (banUser) {
-            setErr(err => err + 1)
-            console.log('Спроба відправки користувачу, який у бан листі! Не відправлено!')
-            return null;
-        }
+        const randomUser = await GetUserInfo(userToSend)
 
         if (checkCamshareInvite) {
             const result = [...invites, ...invitesCamshare];
@@ -73,6 +48,8 @@ const Sending = async (socket, startChat, setIsSending, setIsConnectSocket, setE
         if (personalListArray.includes(randomUser.id)) {
             userExists = true;
 
+            console.log(randomPersonalInvite.msg, 'randomPersonalInvite.msg')
+            console.log(randomUser, 'randomUser')
             replaceEmailContent = await ReplaceTags(randomPersonalInvite.msg, randomUser)
 
             const hasForbiddenTags = CheckForForbiddenTags(replaceEmailContent);
@@ -114,10 +91,6 @@ const Sending = async (socket, startChat, setIsSending, setIsConnectSocket, setE
                 reqCounter++;
                 await delay(3, 7);
             }
-            //
-            // if (reqTicket % 10 === 0) {
-            //     randomUser = spamUserIdsArray
-            // }
 
             if (userExists === true) {
                 SendPersonalInviteToUser(socket, replaceEmailContent, randomUser, logItem, setLog, reqCounter, reqTicket);
@@ -132,7 +105,7 @@ const Sending = async (socket, startChat, setIsSending, setIsConnectSocket, setE
 
         } else {
             console.log("WebSocket закрыт или закрывается. Переподключаемся...");
-            await ConnectWebSocket(socket, setIsConnectSocket, setErrorMessage, whoViewProfile, whoGetAnswer, loginData, setMyListArray, myListArrayRef, setErr, setPersonalListArray, personalListArrayRef, setChat, setMessage, setIsSending, setStartChat, setReconnect, setSendInvite, startChat, invitesPersonal, banUsers, checkCamshareInvite, invites, invitesCamshare, reqTicket, reqCounter, setLog, log, sendInviteRef, setCountInvite, hasSentCmd98, setHasSentCmd98, hasSentCmd98Ref, markGetAnswer, whoGetSecondAnswer);
+            await ConnectWebSocket(socket, setIsConnectSocket, setErrorMessage, whoViewProfile, whoGetAnswer, loginData, setMyListArray, myListArrayRef, setErr, setPersonalListArray, personalListArrayRef, setChat, setMessage, setIsSending, setStartChat, setReconnect, setSendInvite, startChat, invitesPersonal, banUsers, checkCamshareInvite, invites, invitesCamshare, reqTicket, reqCounter, setLog, log, sendInviteRef, setCountInvite, hasSentCmd98, setHasSentCmd98, hasSentCmd98Ref);
         }
 }
 
